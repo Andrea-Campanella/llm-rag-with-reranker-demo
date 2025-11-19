@@ -179,7 +179,9 @@ def call_llm(context: str, prompt: str):
             break
 
 
-def re_rank_cross_encoders(documents: list[str]) -> tuple[str, list[int]]:
+def re_rank_cross_encoders(
+    prompt: str, documents: list[str]
+) -> tuple[str, list[int]]:
     """Re-ranks documents using a cross-encoder model for more accurate relevance scoring.
 
     Uses the MS MARCO MiniLM cross-encoder model to re-rank the input documents based on
@@ -238,13 +240,19 @@ if __name__ == "__main__":
     if ask and prompt:
         results = query_collection(prompt)
         context = results.get("documents")[0]
-        relevant_text, relevant_text_ids = re_rank_cross_encoders(context)
-        response = call_llm(context=relevant_text, prompt=prompt)
-        st.write_stream(response)
+        if not context:
+            st.warning("No relevant documents found for your query.")
+            print(results)
+        else:
+            relevant_text, relevant_text_ids = re_rank_cross_encoders(
+                prompt, context
+            )
+            response = call_llm(context=relevant_text, prompt=prompt)
+            st.write_stream(response)
 
-        with st.expander("See retrieved documents"):
-            st.write(results)
+            with st.expander("See retrieved documents"):
+                st.write(results)
 
-        with st.expander("See most relevant document ids"):
-            st.write(relevant_text_ids)
-            st.write(relevant_text)
+            with st.expander("See most relevant document ids"):
+                st.write(relevant_text_ids)
+                st.write(relevant_text)

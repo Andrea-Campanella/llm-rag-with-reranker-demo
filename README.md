@@ -66,3 +66,27 @@ make help
 ## 🔧 Common Issues and Fixes
 
 - If you run into any errors with incompatible version of ChromaDB/Sqlite3, refer to [this solution](https://docs.trychroma.com/troubleshooting#sqlite).
+
+## 🐳 Docker
+
+You can also build and run the application using Docker.
+
+### Build the Docker Image
+
+```sh
+docker build -t llm-rag-demo .
+```
+
+### Run the Docker Container
+
+To run the container in attached mode (useful for debugging):
+```sh
+docker run -p 8501:8501 -p 11434:11434 --name rag-app llm-rag-demo
+```
+
+To run the container in detached mode (in the background):
+```sh
+docker run -d -p 8501:8501 -p 11434:11434 --name rag-app llm-rag-demo
+```
+
+Once the container is running, you can access the Streamlit application at `http://localhost:8501`.
