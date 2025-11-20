@@ -17,6 +17,34 @@ COPY requirements/requirements.txt ./
 # Install Python dependencies
 RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
+# Pre-pull Ollama models during the build process
+RUN /bin/sh -c ' \
+    echo "Starting Ollama to pull models..." && \
+    /bin/ollama serve & \
+    OLLAMA_PID=$! && \
+    (while ! wget -q -O - http://localhost:11434 > /dev/null; do echo "Waiting for ollama to be ready..."; sleep 1; done) && \
+    echo "Ollama is ready. Pulling models..." && \
+    ollama pull nomic-embed-text:latest && \
+    ollama pull llama3.2:3b && \
+    echo "Models pulled. Stopping Ollama." && \
+    kill $OLLAMA_PID && \
+    wait $OLLAMA_PID || true \
+    '
+
+# Pre-pull Ollama models during the build process
+RUN /bin/sh -c ' \
+    echo "Starting Ollama to pull models..." && \
+    /bin/ollama serve & \
+    OLLAMA_PID=$! && \
+    (while ! wget -q -O - http://localhost:11434 > /dev/null; do echo "Waiting for ollama to be ready..."; sleep 1; done) && \
+    echo "Ollama is ready. Pulling models..." && \
+    ollama pull nomic-embed-text:latest && \
+    ollama pull llama3.2:3b && \
+    echo "Models pulled. Stopping Ollama." && \
+    kill $OLLAMA_PID && \
+    wait $OLLAMA_PID || true \
+    '
+
 # Copy the rest of the application code
 COPY . .
 
