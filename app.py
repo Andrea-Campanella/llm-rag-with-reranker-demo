@@ -79,8 +79,9 @@ def get_vector_collection() -> chromadb.Collection:
         chromadb.Collection: A ChromaDB collection configured with the Ollama embedding
             function and cosine similarity space.
     """
+    ollama_host_url = os.getenv("OLLAMA_HOST_URL", "http://localhost:11434")
     ollama_ef = OllamaEmbeddingFunction(
-        url="http://localhost:11434/api/embeddings",
+        url=f"{ollama_host_url}/api/embeddings",
         model_name="nomic-embed-text:latest",
     )
 
@@ -158,7 +159,8 @@ def call_llm(context: str, prompt: str):
     Raises:
         OllamaError: If there are issues communicating with the Ollama API
     """
-    response = ollama.chat(
+    client = ollama.Client(host=os.getenv("OLLAMA_HOST_URL", "http://localhost:11434"))
+    response = client.chat(
         model="llama3.2:3b",
         stream=True,
         messages=[

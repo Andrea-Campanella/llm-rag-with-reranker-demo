@@ -1,0 +1,54 @@
+
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      - GIN_MODE=release
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    container_name: ollama
+
+  # Service to pull models, runs once and then exits
+  ollama-init:
+    image: ollama/ollama:latest
+    entrypoint: ""
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    # The command waits for the main ollama service to be up, then pulls the models.
+    # This container will exit after the command is complete.
+    command: >
+      /bin/sh -c "
+        (while ! ollama list > /dev/null 2>&1; do echo 'Waiting for ollama service to start...'; sleep 2; done) &&
+        echo 'Ollama is up, pulling models...' &&
+        ollama pull llama3.2:3b &&
+        ollama pull nomic-embed-text:latest &&
+        echo 'Models are pulled and ready.'
+      "
+    # Note: This service is intended to run once. `docker-compose up` will show it as exited, which is normal.
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      # This points the app to the ollama service within the Docker network
+      - OLLAMA_HOST_URL=http://ollama:11434
+    depends_on:
+      # The app service will not start until the ollama-init service has completed successfully.
+      ollama-init:
+        condition: service_completed_successfully
+      ollama:
+        condition: service_started
+    container_name: rag-app
+
+volumes:
+  ollama_data:
+    # This volume persists the downloaded models on the host machine
+    driver: local
